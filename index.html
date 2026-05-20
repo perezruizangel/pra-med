@@ -657,6 +657,118 @@
 
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    width: 100%; max-width: 520px;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+    overflow: hidden;
+    max-height: 90vh;
+    display: flex; flex-direction: column;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    flex-shrink: 0;
+  }
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px; flex: 1;
+  }
+  .modal-close {
+    width: 32px; height: 32px;
+    border: none; background: var(--surface-warm);
+    border-radius: 8px; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: var(--transition); color: var(--text-secondary);
+  }
+  .modal-close:hover { background: #FDEDEC; color: var(--danger); }
+
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    display: flex; gap: 10px; justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  /* Lista de personas en modal */
+  .persona-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+
+  .persona-list-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+  }
+  .persona-list-item:hover { border-color: var(--accent); }
+
+  .persona-list-avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 16px; color: white; flex-shrink: 0;
+  }
+
+  .persona-list-info { flex: 1; }
+  .persona-list-name { font-size: 14px; font-weight: 600; }
+  .persona-list-meta { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+
+  .persona-list-actions { display: flex; gap: 6px; }
+
+  .btn-icon {
+    width: 32px; height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 7px; background: white;
+    cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: var(--transition);
+  }
+  .btn-icon:hover { border-color: var(--accent); background: var(--accent-light); }
+  .btn-icon.danger:hover { border-color: var(--danger); background: #FDEDEC; }
+
+  .modal-section-title {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.8px; color: var(--text-muted);
+    margin-bottom: 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Color picker inline */
+  .color-options {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px;
+  }
+  .color-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; border: 2px solid transparent;
+    transition: var(--transition);
+  }
+  .color-dot.selected { border-color: var(--text-primary); transform: scale(1.15); }
+
   /* ── MOBILE ── */
   @media (max-width: 640px) {
     .header { padding: 0 16px; }
@@ -1120,6 +1232,79 @@
   </form>
 </div>
 
+<!-- MODAL GESTIÓN DE PERSONAS -->
+<div class="modal-overlay" id="modalOverlay" onclick="cerrarModalSiFondo(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="card-icon">&#128106;</div>
+      <span class="modal-title" id="modalTitle">Gestionar personas</span>
+      <button class="modal-close" onclick="cerrarModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalListaSection">
+        <div class="modal-section-title">Personas registradas</div>
+        <div class="persona-list" id="modalPersonaList"></div>
+        <button type="button" class="btn-add-row" onclick="mostrarFormNueva()">+ Agregar nueva persona</button>
+      </div>
+      <div id="modalFormSection" style="display:none">
+        <div class="modal-section-title" id="modalFormTitle">Nueva persona</div>
+        <input type="hidden" id="editPersonaId">
+        <div class="form-grid cols-2" style="gap:16px">
+          <div class="form-group span-2">
+            <label for="pNombre">Nombre completo <span class="req">*</span></label>
+            <input type="text" id="pNombre" placeholder="p. ej. Sofia Garcia">
+          </div>
+          <div class="form-group">
+            <label for="pFechaNac">Fecha de nacimiento</label>
+            <input type="date" id="pFechaNac">
+          </div>
+          <div class="form-group">
+            <label for="pSangre">Tipo de sangre</label>
+            <select id="pSangre">
+              <option value="">No se / Sin dato</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
+            </select>
+          </div>
+          <div class="form-group span-2">
+            <label for="pAlergias">Alergias conocidas</label>
+            <input type="text" id="pAlergias" placeholder="Polen, penicilina, mariscos... o Ninguna">
+          </div>
+          <div class="form-group">
+            <label for="pMedico">Medico habitual</label>
+            <input type="text" id="pMedico" placeholder="Dr. Apellido">
+          </div>
+          <div class="form-group">
+            <label for="pSeguro">Seguro / servicio medico</label>
+            <select id="pSeguro">
+              <option value="">Sin seguro</option>
+              <option>IMSS</option>
+              <option>ISSSTE</option>
+              <option>Seguro privado</option>
+              <option>Seguro Popular</option>
+              <option>Particular</option>
+              <option>Otro</option>
+            </select>
+          </div>
+          <div class="form-group span-2">
+            <label>Color del avatar</label>
+            <div class="color-options" id="colorOptions"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" id="modalFooter">
+      <button type="button" class="btn-reset" id="modalCancelBtn" onclick="cerrarModal()">Cancelar</button>
+      <button type="button" class="btn-submit" id="modalBtn" onclick="guardarPersona()">
+        <span class="spinner" id="modalSpinner"></span>
+        <span id="modalBtnText">Guardar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -1127,7 +1312,7 @@
 // ── CONFIGURACIÓN ──────────────────────────────────────────────────────────────
 const CONFIG = {
   // 🔧 REEMPLAZA con la URL de tu Google Apps Script Web App
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/TU_SCRIPT_ID/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwEM1xZMZiZdUJrnOl7XEY7qcr85osZULTZ5_TWpl7dENNtC-1ojXfBH3JcdTwSBfjI/exec',
   MAX_FILE_MB: 10,
 };
 
@@ -1208,7 +1393,7 @@ function renderPersonas() {
     <div class="persona-name">Agregar</div>
     <div class="persona-meta">Nueva persona</div>
   `;
-  addCard.onclick = () => showToast('Próximamente: agregar nuevas personas', '🔜', 'warn');
+  addCard.onclick = () => abrirModal();
   grid.appendChild(addCard);
 }
 
@@ -1432,8 +1617,8 @@ async function handleSubmit(e) {
     console.log('📤 Datos a enviar:', formData);
     console.log('📎 Archivos:', renamedFiles.map(f => f.renamed));
 
-    // Simular envío
-    await simulateSubmit(formData, renamedFiles);
+    // Enviar al Apps Script
+    await enviarAlScript(formData, renamedFiles);
 
     showToast(`Evento ${idEvento} guardado correctamente`, '✅');
     setTimeout(() => resetForm(), 2000);
@@ -1550,13 +1735,7 @@ function collectFormData(idEvento, renamedFiles) {
   return data;
 }
 
-// ── SIMULACIÓN (reemplazar con Apps Script real) ────────────────────────────
-async function simulateSubmit(data, files) {
-  await new Promise(r => setTimeout(r, 1800));
-  // En producción: POST a CONFIG.APPS_SCRIPT_URL con FormData o JSON
-  // Los archivos van como base64 dentro del JSON o como multipart
-  console.log('✅ Simulación exitosa. Datos:', data);
-}
+// ── (simulateSubmit removido — se usa enviarAlScript) ─────────────────────
 
 // ── HELPERS UI ────────────────────────────────────────────────────────────────
 function setSubmitLoading(on) {
@@ -1594,6 +1773,266 @@ function resetForm() {
   updateProgress();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+  // ── ENVÍO REAL AL APPS SCRIPT ─────────────────────────────────────────────
+  async function enviarAlScript(data, renamedFiles) {
+    const filesPayload = await Promise.all(
+      renamedFiles.map(item => fileToBase64Payload(item))
+    );
+    const payload = { form: data, files: filesPayload };
+
+    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+      mode:    'cors',
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error || 'Error del servidor');
+    return json;
+  }
+
+  function fileToBase64Payload(item) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        resolve({
+          name:         item.renamed,
+          originalName: item.original,
+          base64:       reader.result.split(',')[1],
+          mimeType:     item.file.type || 'application/octet-stream',
+        });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(item.file);
+    });
+  }
+
+
+// ═══════════════════════════════════════════════════════════════
+//  MÓDULO: GESTIÓN DE PERSONAS
+// ═══════════════════════════════════════════════════════════════
+
+const COLORES_AVATAR = [
+  '#2D5F4F','#5A4A7A','#1A5276','#7B241C','#145A32',
+  '#7D6608','#154360','#4A235A','#6E2C00','#1B4F72',
+  '#2E4057','#A04000','#0E6655','#512E5F','#1A252F',
+];
+
+let colorSeleccionado = COLORES_AVATAR[0];
+let modoModal = 'lista'; // 'lista' | 'nueva' | 'editar'
+
+function abrirModal() {
+  modoModal = 'lista';
+  renderModalLista();
+  document.getElementById('modalListaSection').style.display = 'block';
+  document.getElementById('modalFormSection').style.display  = 'none';
+  document.getElementById('modalTitle').textContent = 'Gestionar personas';
+  document.getElementById('modalBtn').style.display = 'none';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function cerrarModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function cerrarModalSiFondo(e) {
+  if (e.target === document.getElementById('modalOverlay')) cerrarModal();
+}
+
+function renderModalLista() {
+  const lista = document.getElementById('modalPersonaList');
+  lista.innerHTML = '';
+
+  PERSONAS.forEach((p, idx) => {
+    const item = document.createElement('div');
+    item.className = 'persona-list-item';
+    item.innerHTML = `
+      <div class="persona-list-avatar" style="background:${p.color}">${p.iniciales}</div>
+      <div class="persona-list-info">
+        <div class="persona-list-name">${p.nombre}</div>
+        <div class="persona-list-meta">
+          ${p.sangre ? 'Sangre: ' + p.sangre : 'Sangre: no registrada'}
+          ${p.alergias ? ' · ' + p.alergias : ''}
+        </div>
+      </div>
+      <div class="persona-list-actions">
+        <button class="btn-icon" onclick="mostrarFormEditar(${idx})" title="Editar">✏️</button>
+        ${idx > 1 ? `<button class="btn-icon danger" onclick="eliminarPersona(${idx})" title="Eliminar">🗑️</button>` : ''}
+      </div>
+    `;
+    lista.appendChild(item);
+  });
+}
+
+function mostrarFormNueva() {
+  modoModal = 'nueva';
+  limpiarFormPersona();
+  document.getElementById('modalFormTitle').textContent = 'Nueva persona';
+  document.getElementById('modalListaSection').style.display = 'none';
+  document.getElementById('modalFormSection').style.display  = 'block';
+  document.getElementById('modalBtn').style.display = 'flex';
+  document.getElementById('modalBtnText').textContent = 'Agregar persona';
+  document.getElementById('modalTitle').textContent = 'Nueva persona';
+  renderColorPicker();
+}
+
+function mostrarFormEditar(idx) {
+  modoModal = 'editar';
+  const p = PERSONAS[idx];
+  document.getElementById('editPersonaId').value  = p.id;
+  document.getElementById('pNombre').value        = p.nombre;
+  document.getElementById('pFechaNac').value      = p.fechaNac  || '';
+  document.getElementById('pSangre').value        = p.sangre    || '';
+  document.getElementById('pAlergias').value      = p.alergias  || '';
+  document.getElementById('pMedico').value        = p.medico    || '';
+  document.getElementById('pSeguro').value        = p.seguro    || '';
+  colorSeleccionado = p.color;
+
+  document.getElementById('modalFormTitle').textContent = 'Editar persona';
+  document.getElementById('modalListaSection').style.display = 'none';
+  document.getElementById('modalFormSection').style.display  = 'block';
+  document.getElementById('modalBtn').style.display = 'flex';
+  document.getElementById('modalBtnText').textContent = 'Guardar cambios';
+  document.getElementById('modalTitle').textContent = 'Editar: ' + p.nombre;
+  renderColorPicker();
+}
+
+function limpiarFormPersona() {
+  ['pNombre','pFechaNac','pAlergias','pMedico'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('pSangre').value = '';
+  document.getElementById('pSeguro').value = '';
+  document.getElementById('editPersonaId').value = '';
+  colorSeleccionado = COLORES_AVATAR[Math.floor(Math.random() * COLORES_AVATAR.length)];
+}
+
+function renderColorPicker() {
+  const container = document.getElementById('colorOptions');
+  container.innerHTML = '';
+  COLORES_AVATAR.forEach(c => {
+    const dot = document.createElement('div');
+    dot.className = 'color-dot' + (c === colorSeleccionado ? ' selected' : '');
+    dot.style.background = c;
+    dot.onclick = () => {
+      colorSeleccionado = c;
+      document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+      dot.classList.add('selected');
+    };
+    container.appendChild(dot);
+  });
+}
+
+function generarIniciales(nombre) {
+  const partes = nombre.trim().split(/\s+/);
+  if (partes.length === 1) return partes[0].slice(0,2).toUpperCase();
+  return (partes[0][0] + partes[1][0]).toUpperCase();
+}
+
+function generarIdPersona() {
+  const maxId = PERSONAS.reduce((max, p) => {
+    const n = parseInt(p.id.replace('P','')) || 0;
+    return n > max ? n : max;
+  }, 0);
+  return 'P' + String(maxId + 1).padStart(3, '0');
+}
+
+async function guardarPersona() {
+  const nombre = document.getElementById('pNombre').value.trim();
+  if (!nombre) {
+    showToast('El nombre es obligatorio', '⚠️', 'error');
+    return;
+  }
+
+  const persona = {
+    id:       modoModal === 'editar' ? document.getElementById('editPersonaId').value : generarIdPersona(),
+    nombre:   nombre,
+    iniciales: generarIniciales(nombre),
+    sangre:   document.getElementById('pSangre').value,
+    alergias: document.getElementById('pAlergias').value,
+    medico:   document.getElementById('pMedico').value,
+    seguro:   document.getElementById('pSeguro').value,
+    fechaNac: document.getElementById('pFechaNac').value,
+    color:    colorSeleccionado,
+  };
+
+  // Loading
+  document.getElementById('modalBtn').disabled = true;
+  document.getElementById('modalSpinner').style.display = 'block';
+  document.getElementById('modalBtnText').textContent = 'Guardando...';
+
+  try {
+    await guardarPersonaEnScript(persona, modoModal);
+
+    if (modoModal === 'nueva') {
+      PERSONAS.push(persona);
+    } else {
+      const idx = PERSONAS.findIndex(p => p.id === persona.id);
+      if (idx !== -1) PERSONAS[idx] = persona;
+    }
+
+    // Actualizar select "Registrado por"
+    actualizarSelectRegistradoPor();
+
+    renderPersonas();
+    cerrarModal();
+    showToast(
+      modoModal === 'nueva' ? `${nombre} agregado` : `${nombre} actualizado`,
+      '✅'
+    );
+  } catch(err) {
+    showToast('Error al guardar: ' + err.message, '❌', 'error');
+  } finally {
+    document.getElementById('modalBtn').disabled = false;
+    document.getElementById('modalSpinner').style.display = 'none';
+  }
+}
+
+function eliminarPersona(idx) {
+  const p = PERSONAS[idx];
+  if (!confirm(`¿Eliminar a ${p.nombre} de la lista?\n\nSus eventos en el Sheet NO se borran.`)) return;
+  PERSONAS.splice(idx, 1);
+  actualizarSelectRegistradoPor();
+  renderModalLista();
+  renderPersonas();
+  showToast(`${p.nombre} eliminado de la lista`, '🗑️', 'warn');
+}
+
+function actualizarSelectRegistradoPor() {
+  const sel = document.getElementById('registradoPor');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Selecciona\u2026</option>';
+  PERSONAS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.nombre;
+    sel.appendChild(opt);
+  });
+  sel.value = val;
+}
+
+async function guardarPersonaEnScript(persona, modo) {
+  const payload = {
+    accion:  modo === 'nueva' ? 'nueva_persona' : 'editar_persona',
+    persona: persona,
+  };
+
+  const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify(payload),
+    mode:    'cors',
+  });
+
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (!json.ok) throw new Error(json.error || 'Error del servidor');
+  return json;
+}
+
 </script>
 </body>
 </html>
