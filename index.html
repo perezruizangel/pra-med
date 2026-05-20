@@ -2012,26 +2012,27 @@ async function guardarPersonaEnScript(persona, modo) {
 }
 
 // ── HELPER CENTRAL DE FETCH → Apps Script ──────────────────────────────────
-// Apps Script no soporta preflight CORS (OPTIONS), así que enviamos el JSON
-// como valor de un campo en un FormData — Apps Script lo lee en e.parameter.data
+// Apps Script no soporta CORS preflight. Solución: enviamos como URLSearchParams
+// (application/x-www-form-urlencoded) que NO dispara preflight.
 async function postAlScript(payload) {
-  const form = new FormData();
-  form.append('data', JSON.stringify(payload));
+  const params = new URLSearchParams();
+  params.append('data', JSON.stringify(payload));
 
   const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method: 'POST',
-    body:   form,
+    method:   'POST',
+    body:     params,
+    redirect: 'follow',
   });
 
-  // no-cors devuelve opaque response, así que usamos un redirect trick:
-  // Apps Script redirige a sí mismo con ?result=... en GET
-  // En su lugar usamos el approach estándar con followRedirects
-  if (!res.ok && res.type !== 'opaque') throw new Error(`HTTP ${res.status}`);
+  // Apps Script siempre redirige a una URL de googleusercontent —
+  // el browser la sigue automáticamente con redirect:follow
+  if (!res.ok) throw new Error('HTTP ' + res.status);
 
-  // Si es opaque (no-cors) asumimos éxito — Apps Script ya guardó
-  if (res.type === 'opaque') return { ok: true };
+  const text = await res.text();
+  let json;
+  try { json = JSON.parse(text); }
+  catch(_) { throw new Error('Respuesta inválida del servidor'); }
 
-  const json = await res.json();
   if (!json.ok) throw new Error(json.error || 'Error del servidor');
   return json;
 }
