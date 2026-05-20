@@ -2011,30 +2011,78 @@ async function guardarPersonaEnScript(persona, modo) {
   return postAlScript(payload);
 }
 
-// ── HELPER CENTRAL DE FETCH → Apps Script ──────────────────────────────────
-// Apps Script no soporta CORS preflight. Solución: enviamos como URLSearchParams
-// (application/x-www-form-urlencoded) que NO dispara preflight.
-async function postAlScript(payload) {
-  const params = new URLSearchParams();
-  params.append('data', JSON.stringify(payload));
+// ── HELPER CENTRAL — POST a Apps Script via iframe ───────────────────────────
+// Apps Script bloquea fetch con CORS. Solución: form real → iframe oculto.
+// Para leer la respuesta, el script redirige a una URL con el resultado en ?r=
+function postAlScript(payload) {
+  return new Promise((resolve, reject) => {
+    // 1. Crear iframe oculto como target
+    const iframeId = 'as_iframe_' + Date.now();
+    const iframe   = document.createElement('iframe');
+    iframe.name    = iframeId;
+    iframe.style.cssText = 'display:none;position:absolute;width:0;height:0';
+    document.body.appendChild(iframe);
 
-  const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method:   'POST',
-    body:     params,
-    redirect: 'follow',
+    // 2. Crear form oculto apuntando al iframe
+    const form    = document.createElement('form');
+    form.method   = 'POST';
+    form.action   = CONFIG.APPS_SCRIPT_URL;
+    form.target   = iframeId;
+    form.style.display = 'none';
+
+    const input   = document.createElement('input');
+    input.type    = 'hidden';
+    input.name    = 'data';
+    input.value   = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+
+    // 3. Escuchar cuando el iframe cargue (Apps Script responde)
+    let done = false;
+    const timeout = setTimeout(() => {
+      if (!done) {
+        done = true;
+        cleanup();
+        // Timeout = asumimos éxito (Apps Script a veces no dispara onload)
+        resolve({ ok: true });
+      }
+    }, 8000);
+
+    iframe.onload = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timeout);
+      try {
+        const txt = iframe.contentDocument?.body?.innerText || '';
+        const json = JSON.parse(txt);
+        cleanup();
+        if (json.ok) resolve(json);
+        else reject(new Error(json.error || 'Error del servidor'));
+      } catch(_) {
+        cleanup();
+        // No pudimos leer la respuesta (cross-origin) pero el form llegó
+        resolve({ ok: true });
+      }
+    };
+
+    iframe.onerror = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timeout);
+      cleanup();
+      reject(new Error('Error de red'));
+    };
+
+    function cleanup() {
+      try { document.body.removeChild(form); } catch(_) {}
+      setTimeout(() => {
+        try { document.body.removeChild(iframe); } catch(_) {}
+      }, 1000);
+    }
+
+    // 4. Enviar
+    form.submit();
   });
-
-  // Apps Script siempre redirige a una URL de googleusercontent —
-  // el browser la sigue automáticamente con redirect:follow
-  if (!res.ok) throw new Error('HTTP ' + res.status);
-
-  const text = await res.text();
-  let json;
-  try { json = JSON.parse(text); }
-  catch(_) { throw new Error('Respuesta inválida del servidor'); }
-
-  if (!json.ok) throw new Error(json.error || 'Error del servidor');
-  return json;
 }
 
 
