@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Expediente Médico Familiar</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap');
+
+  :root {
+    --bg: #F7F5F0;
+    --surface: #FFFFFF;
+    --surface-warm: #FDF9F3;
+    --border: #E8E2D9;
+    --border-focus: #2D5F4F;
+    --accent: #2D5F4F;
+    --accent-light: #E8F0ED;
+    --accent-mid: #4A8A75;
+    --danger: #C0392B;
+    --warn: #E67E22;
+    --warn-light: #FEF5EC;
+    --text-primary: #1A1A1A;
+    --text-secondary: #5C5852;
+    --text-muted: #9B9590;
+    --text-on-accent: #FFFFFF;
+    --chip-vac: #1A5276; --chip-vac-bg: #EBF5FB;
+    --chip-enf: #6E2C00; --chip-enf-bg: #FDEBD0;
+    --chip-con: #145A32; --chip-con-bg: #EAFAF1;
+    --chip-inc: #7B241C; --chip-inc-bg: #FDEDEC;
+    --chip-est: #4A235A; --chip-est-bg: #F5EEF8;
+    --chip-cir: #154360; --chip-cir-bg: #EBF5FB;
+    --chip-odo: #7D6608; --chip-odo-bg: #FEFDE7;
+    --chip-med: #1B4F72; --chip-med-bg: #EBF5FB;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 16px rgba(0,0,0,0.06);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.10);
+    --transition: 0.22s cubic-bezier(.4,0,.2,1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--accent);
+    padding: 0 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 20px rgba(45,95,79,0.3);
+  }
+
+  .header-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+
+  .header-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: white;
+    letter-spacing: -0.3px;
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 1px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 8px;
+  }
+
+  .nav-btn {
+    padding: 7px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .nav-btn.active {
+    background: white;
+    color: var(--accent);
+  }
+
+  .nav-btn.ghost {
+    background: rgba(255,255,255,0.12);
+    color: white;
+  }
+
+  .nav-btn.ghost:hover { background: rgba(255,255,255,0.22); }
+
+  /* ── LAYOUT ── */
+  .page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  .page-intro {
+    margin-bottom: 36px;
+  }
+
+  .page-intro h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 32px;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .page-intro p {
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  /* ── PROGRESS ── */
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 36px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+    width: 0%;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 32px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    transition: box-shadow var(--transition);
+  }
+
+  .card:hover { box-shadow: var(--shadow-lg); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-icon {
+    width: 32px; height: 32px;
+    background: var(--accent-light);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--text-primary);
+    letter-spacing: -0.2px;
+  }
+
+  .card-badge {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* ── FORM ELEMENTS ── */
+  .form-grid {
+    display: grid;
+    gap: 20px;
+  }
+
+  .form-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+  .form-group.span-2 { grid-column: span 2; }
+  .form-group.span-3 { grid-column: span 3; }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  label .req { color: var(--danger); margin-left: 2px; }
+
+  input[type="text"],
+  input[type="date"],
+  input[type="time"],
+  input[type="email"],
+  select,
+  textarea {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text-primary);
+    background: var(--surface-warm);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    width: 100%;
+    transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235C5852' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+    cursor: pointer;
+  }
+
+  textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--border-focus);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(45,95,79,0.1);
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--text-muted); }
+
+  /* ── PERSONA SELECTOR ── */
+  .persona-grid {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .persona-card {
+    flex: 1;
+    min-width: 140px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--surface-warm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    user-select: none;
+  }
+
+  .persona-card:hover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .persona-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(45,95,79,0.12);
+  }
+
+  .persona-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 8px;
+    width: 20px; height: 20px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+  }
+
+  .persona-avatar {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    letter-spacing: -1px;
+    flex-shrink: 0;
+  }
+
+  .persona-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: center;
+  }
+
+  .persona-meta {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  .persona-add {
+    border-style: dashed;
+    opacity: 0.5;
+  }
+
+  .persona-add:hover { opacity: 0.85; }
+
+  .persona-add .persona-avatar {
+    background: transparent;
+    border: 2px dashed var(--text-muted);
+    color: var(--text-muted);
+    font-size: 28px;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+  }
+
+  /* ── TIPO EVENTO SELECTOR ── */
+  .tipo-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .tipo-chip {
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 8px;
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--surface-warm);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    user-select: none;
+  }
+
+  .tipo-chip:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+  .tipo-chip.selected { box-shadow: 0 0 0 2px; }
+
+  .tipo-icon { font-size: 20px; }
+  .tipo-label { font-size: 11px; font-weight: 600; text-align: center; line-height: 1.2; }
+
+  /* tipo colors */
+  .tipo-chip[data-tipo="VACUNACION"] { --c: var(--chip-vac); --cb: var(--chip-vac-bg); }
+  .tipo-chip[data-tipo="ENFERMEDAD"] { --c: var(--chip-enf); --cb: var(--chip-enf-bg); }
+  .tipo-chip[data-tipo="CONSULTA"]   { --c: var(--chip-con); --cb: var(--chip-con-bg); }
+  .tipo-chip[data-tipo="INCIDENTE"]  { --c: var(--chip-inc); --cb: var(--chip-inc-bg); }
+  .tipo-chip[data-tipo="ESTUDIO"]    { --c: var(--chip-est); --cb: var(--chip-est-bg); }
+  .tipo-chip[data-tipo="CIRUGIA"]    { --c: var(--chip-cir); --cb: var(--chip-cir-bg); }
+  .tipo-chip[data-tipo="ODONTOLOGIA"] { --c: var(--chip-odo); --cb: var(--chip-odo-bg); }
+  .tipo-chip[data-tipo="MEDICAMENTO"] { --c: var(--chip-med); --cb: var(--chip-med-bg); }
+
+  .tipo-chip.selected {
+    background: var(--cb);
+    border-color: var(--c);
+    color: var(--c);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--c) 15%, transparent);
+  }
+
+  .tipo-chip.selected .tipo-label { color: var(--c); }
+
+  /* ── CONDITIONAL SECTIONS ── */
+  .conditional-section {
+    display: none;
+    animation: fadeSlideIn 0.3s ease;
+  }
+
+  .conditional-section.visible { display: block; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── MEDICAMENTOS REPETIDOR ── */
+  .med-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+    padding: 14px;
+    background: var(--surface-warm);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 10px;
+    animation: fadeSlideIn 0.2s ease;
+  }
+
+  .med-remove {
+    width: 36px; height: 36px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    color: var(--danger);
+    transition: var(--transition);
+    flex-shrink: 0;
+  }
+
+  .med-remove:hover { background: #FDEDEC; border-color: var(--danger); }
+
+  .btn-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    border: 1.5px dashed var(--accent);
+    background: var(--accent-light);
+    border-radius: var(--radius-sm);
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    width: 100%;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-add-row:hover { background: #D5E8E0; }
+
+  /* ── FILE UPLOAD ── */
+  .file-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition);
+    background: var(--surface-warm);
+    position: relative;
+  }
+
+  .file-zone:hover, .file-zone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-light);
+  }
+
+  .file-zone input[type="file"] {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+
+  .file-zone-icon { font-size: 32px; margin-bottom: 8px; }
+  .file-zone-label { font-size: 14px; font-weight: 500; color: var(--text-secondary); }
+  .file-zone-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    animation: fadeSlideIn 0.2s ease;
+  }
+
+  .file-item-icon { font-size: 18px; flex-shrink: 0; }
+
+  .file-item-info { flex: 1; min-width: 0; }
+  .file-item-name {
+    font-size: 13px; font-weight: 500;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .file-item-size { font-size: 11px; color: var(--text-muted); }
+
+  .file-item-rename input {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .file-remove {
+    border: none; background: none;
+    cursor: pointer; color: var(--danger);
+    font-size: 16px; padding: 4px;
+    border-radius: 4px;
+    transition: var(--transition);
+  }
+
+  .file-remove:hover { background: #FDEDEC; }
+
+  /* ── SUBMIT ── */
+  .submit-area {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .btn-reset {
+    padding: 12px 24px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: white;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+  .btn-submit {
+    padding: 12px 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: var(--accent);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: 'DM Sans', sans-serif;
+    display: flex; align-items: center; gap: 8px;
+    letter-spacing: 0.2px;
+  }
+
+  .btn-submit:hover { background: #245247; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(45,95,79,0.3); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--accent);
+    color: white;
+    padding: 14px 20px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: var(--shadow-lg);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+    z-index: 999;
+    display: flex; align-items: center; gap: 10px;
+    max-width: 360px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--danger); }
+  .toast.warn  { background: var(--warn); }
+
+  /* ── STATUS TAG ── */
+  .status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--accent-light);
+    color: var(--accent);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── HELPER TEXT ── */
+  .helper {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: -4px;
+  }
+
+  .warn-box {
+    background: var(--warn-light);
+    border: 1px solid #F0C080;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #8B5E0A;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  /* ── LOADING SPINNER ── */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── MOBILE ── */
+  @media (max-width: 640px) {
+    .header { padding: 0 16px; }
+    .page { padding: 24px 16px 60px; }
+    .card { padding: 20px 16px; }
+    .form-grid.cols-2,
+    .form-grid.cols-3 { grid-template-columns: 1fr; }
+    .form-group.span-2,
+    .form-group.span-3 { grid-column: span 1; }
+    .tipo-grid { grid-template-columns: repeat(4, 1fr); }
+    .med-row { grid-template-columns: 1fr 1fr; }
+    .med-row .med-remove { grid-column: span 2; width: 100%; }
+    .submit-area { flex-direction: column; }
+    .btn-reset, .btn-submit { width: 100%; justify-content: center; }
+    .persona-card { min-width: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+  <div class="header-logo">
+    <div class="header-icon">🏥</div>
+    <div>
+      <div class="header-title">Expediente Familiar</div>
+      <div class="header-subtitle">Registro médico</div>
+    </div>
+  </div>
+  <div class="header-nav">
+    <button class="nav-btn active">Nuevo evento</button>
+    <button class="nav-btn ghost" onclick="alert('Dashboard próximamente')">Dashboard →</button>
+  </div>
+</header>
+
+<!-- PÁGINA -->
+<div class="page">
+
+  <div class="page-intro">
+    <h1>Registrar evento médico</h1>
+    <p>Completa los datos del evento. Los archivos adjuntos se guardan en Drive automáticamente.</p>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <form id="medForm" novalidate>
+
+    <!-- ── 1. PERSONA ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">👤</div>
+        <span class="card-title">¿Para quién es el registro?</span>
+        <span class="card-badge">Paso 1</span>
+      </div>
+
+      <div class="persona-grid" id="personaGrid">
+        <!-- Generado por JS -->
+      </div>
+
+      <input type="hidden" id="idPersona" name="idPersona">
+      <input type="hidden" id="nombrePersona" name="nombrePersona">
+    </div>
+
+    <!-- ── 2. TIPO DE EVENTO ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">🏷️</div>
+        <span class="card-title">Tipo de evento</span>
+        <span class="card-badge">Paso 2</span>
+      </div>
+
+      <div class="tipo-grid">
+        <div class="tipo-chip" data-tipo="VACUNACION" onclick="selectTipo(this)">
+          <span class="tipo-icon">💉</span>
+          <span class="tipo-label">Vacunación</span>
+        </div>
+        <div class="tipo-chip" data-tipo="ENFERMEDAD" onclick="selectTipo(this)">
+          <span class="tipo-icon">🤒</span>
+          <span class="tipo-label">Enfermedad</span>
+        </div>
+        <div class="tipo-chip" data-tipo="CONSULTA" onclick="selectTipo(this)">
+          <span class="tipo-icon">🩺</span>
+          <span class="tipo-label">Consulta</span>
+        </div>
+        <div class="tipo-chip" data-tipo="INCIDENTE" onclick="selectTipo(this)">
+          <span class="tipo-icon">🚨</span>
+          <span class="tipo-label">Incidente</span>
+        </div>
+        <div class="tipo-chip" data-tipo="ESTUDIO" onclick="selectTipo(this)">
+          <span class="tipo-icon">🔬</span>
+          <span class="tipo-label">Estudio / Laboratorio</span>
+        </div>
+        <div class="tipo-chip" data-tipo="CIRUGIA" onclick="selectTipo(this)">
+          <span class="tipo-icon">🏥</span>
+          <span class="tipo-label">Cirugía</span>
+        </div>
+        <div class="tipo-chip" data-tipo="ODONTOLOGIA" onclick="selectTipo(this)">
+          <span class="tipo-icon">🦷</span>
+          <span class="tipo-label">Odontología</span>
+        </div>
+        <div class="tipo-chip" data-tipo="MEDICAMENTO" onclick="selectTipo(this)">
+          <span class="tipo-icon">💊</span>
+          <span class="tipo-label">Medicamento</span>
+        </div>
+      </div>
+      <input type="hidden" id="tipoEvento" name="tipoEvento">
+    </div>
+
+    <!-- ── 3. DATOS BASE ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📋</div>
+        <span class="card-title">Datos del evento</span>
+        <span class="card-badge">Paso 3</span>
+      </div>
+
+      <div class="form-grid cols-3">
+        <div class="form-group">
+          <label for="fecha">Fecha <span class="req">*</span></label>
+          <input type="date" id="fecha" name="fecha" required>
+        </div>
+        <div class="form-group">
+          <label for="hora">Hora (aprox.)</label>
+          <input type="time" id="hora" name="hora">
+        </div>
+        <div class="form-group" id="subtipo-group">
+          <label for="subtipo">Subtipo <span class="req">*</span></label>
+          <select id="subtipo" name="subtipo" required>
+            <option value="">— Selecciona tipo primero —</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="medico">Médico / Profesional</label>
+          <input type="text" id="medico" name="medico" placeholder="Dr. Apellido o nombre completo">
+        </div>
+        <div class="form-group">
+          <label for="institucion">Institución / Clínica</label>
+          <input type="text" id="institucion" name="institucion" placeholder="Hospital, clínica, consultorio…">
+        </div>
+      </div>
+
+      <div class="form-grid cols-1" style="margin-top:20px">
+        <div class="form-group">
+          <label for="descripcion">Descripción general <span class="req">*</span></label>
+          <textarea id="descripcion" name="descripcion" rows="3" placeholder="Describe brevemente el motivo o situación del evento…" required></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 4. SECCIONES CONDICIONALES ── -->
+
+    <!-- VACUNACIÓN -->
+    <div class="card conditional-section" id="sec-VACUNACION">
+      <div class="card-header">
+        <div class="card-icon">💉</div>
+        <span class="card-title">Detalles de vacunación</span>
+      </div>
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="vac-nombre">Nombre de la vacuna <span class="req">*</span></label>
+          <input type="text" id="vac-nombre" name="vac_nombre" placeholder="p. ej. Influenza cuadrivalente">
+        </div>
+        <div class="form-group">
+          <label for="vac-lote">Número de lote</label>
+          <input type="text" id="vac-lote" name="vac_lote" placeholder="Lote del fabricante">
+        </div>
+        <div class="form-group">
+          <label for="vac-fabricante">Fabricante / Marca</label>
+          <input type="text" id="vac-fabricante" name="vac_fabricante" placeholder="p. ej. Pfizer, Sanofi…">
+        </div>
+        <div class="form-group">
+          <label for="vac-proxima">Próxima dosis / Refuerzo</label>
+          <input type="date" id="vac-proxima" name="vac_proxima">
+        </div>
+        <div class="form-group span-2">
+          <label for="vac-sitio">Sitio de aplicación</label>
+          <select id="vac-sitio" name="vac_sitio">
+            <option value="">Selecciona…</option>
+            <option>Brazo derecho (deltoides)</option>
+            <option>Brazo izquierdo (deltoides)</option>
+            <option>Muslo derecho</option>
+            <option>Muslo izquierdo</option>
+            <option>Subcutánea</option>
+            <option>Oral</option>
+            <option>Otro</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENFERMEDAD / CONSULTA / CIRUGÍA (campos clínicos compartidos) -->
+    <div class="card conditional-section" id="sec-ENFERMEDAD">
+      <div class="card-header">
+        <div class="card-icon">🩺</div>
+        <span class="card-title" id="sec-clinico-title">Detalles clínicos</span>
+      </div>
+      <div class="form-grid cols-1">
+        <div class="form-group">
+          <label for="diagnostico">Diagnóstico</label>
+          <input type="text" id="diagnostico" name="diagnostico" placeholder="p. ej. Faringitis bacteriana (CIE-10: J02.0)">
+        </div>
+        <div class="form-group">
+          <label for="tratamiento">Tratamiento indicado</label>
+          <textarea id="tratamiento" name="tratamiento" rows="2" placeholder="Describe el tratamiento, indicaciones, restricciones…"></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Medicamentos repetidor -->
+      <div style="margin-bottom:12px">
+        <label style="display:block;margin-bottom:10px">Medicamentos recetados</label>
+        <div id="med-rows"></div>
+        <button type="button" class="btn-add-row" onclick="addMedRow()">
+          + Agregar medicamento
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="proxima-cita">Próxima cita</label>
+          <input type="date" id="proxima-cita" name="proxima_cita">
+        </div>
+        <div class="form-group">
+          <label for="resultado">Resultado / Evolución</label>
+          <select id="resultado" name="resultado">
+            <option value="">Selecciona…</option>
+            <option>En tratamiento</option>
+            <option>Mejoría parcial</option>
+            <option>Recuperado</option>
+            <option>Crónico / Control</option>
+            <option>Referido a especialista</option>
+            <option>Urgencia</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- INCIDENTE -->
+    <div class="card conditional-section" id="sec-INCIDENTE">
+      <div class="card-header">
+        <div class="card-icon">🚨</div>
+        <span class="card-title">Detalles del incidente</span>
+      </div>
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="inc-lugar">Lugar del incidente</label>
+          <input type="text" id="inc-lugar" name="inc_lugar" placeholder="Casa, calle, trabajo, escuela…">
+        </div>
+        <div class="form-group">
+          <label for="inc-gravedad">Gravedad</label>
+          <select id="inc-gravedad" name="inc_gravedad">
+            <option value="">Selecciona…</option>
+            <option>Leve (sin atención médica)</option>
+            <option>Moderado (atención básica)</option>
+            <option>Grave (urgencias)</option>
+            <option>Muy grave (hospitalización)</option>
+          </select>
+        </div>
+        <div class="form-group span-2">
+          <label for="inc-primeros-auxilios">Primeros auxilios / Atención inmediata</label>
+          <textarea id="inc-primeros-auxilios" name="inc_primeros_auxilios" rows="2" placeholder="Qué se hizo en el momento…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="inc-secuelas">Secuelas / Seguimiento</label>
+          <input type="text" id="inc-secuelas" name="inc_secuelas" placeholder="Lesiones, fractura, cicatriz…">
+        </div>
+        <div class="form-group">
+          <label for="inc-resultado">Resultado final</label>
+          <select id="inc-resultado" name="inc_resultado">
+            <option value="">Selecciona…</option>
+            <option>Sin secuelas</option>
+            <option>Recuperación completa</option>
+            <option>En rehabilitación</option>
+            <option>Secuelas permanentes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTUDIO -->
+    <div class="card conditional-section" id="sec-ESTUDIO">
+      <div class="card-header">
+        <div class="card-icon">🔬</div>
+        <span class="card-title">Detalles del estudio</span>
+      </div>
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="est-nombre">Nombre del estudio</label>
+          <input type="text" id="est-nombre" name="est_nombre" placeholder="p. ej. BH completa, Rayos X de tórax…">
+        </div>
+        <div class="form-group">
+          <label for="est-laboratorio">Laboratorio / Unidad</label>
+          <input type="text" id="est-laboratorio" name="est_laboratorio" placeholder="Nombre del lab o clínica">
+        </div>
+        <div class="form-group span-2">
+          <label for="est-interpretacion">Interpretación / Resultados</label>
+          <textarea id="est-interpretacion" name="est_interpretacion" rows="3" placeholder="Resumen de resultados o interpretación del médico…"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="est-valores">Valores clave</label>
+          <input type="text" id="est-valores" name="est_valores" placeholder="Hemoglobina: 14.5 g/dL, Glucosa: 92 mg/dL…">
+        </div>
+        <div class="form-group">
+          <label for="est-status">Estado</label>
+          <select id="est-status" name="est_status">
+            <option value="">Selecciona…</option>
+            <option>Normal</option>
+            <option>Valores fuera de rango</option>
+            <option>Requiere seguimiento</option>
+            <option>Pendiente interpretación</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ODONTOLOGÍA -->
+    <div class="card conditional-section" id="sec-ODONTOLOGIA">
+      <div class="card-header">
+        <div class="card-icon">🦷</div>
+        <span class="card-title">Detalles odontológicos</span>
+      </div>
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="odo-pieza">Pieza(s) dental(es)</label>
+          <input type="text" id="odo-pieza" name="odo_pieza" placeholder="p. ej. Molar inferior derecho #36">
+        </div>
+        <div class="form-group">
+          <label for="odo-procedimiento">Procedimiento realizado</label>
+          <input type="text" id="odo-procedimiento" name="odo_procedimiento" placeholder="Extracción, ortodoncia, endodoncia…">
+        </div>
+        <div class="form-group">
+          <label for="odo-anestesia">Anestesia aplicada</label>
+          <select id="odo-anestesia" name="odo_anestesia">
+            <option value="">Selecciona…</option>
+            <option>No requirió</option>
+            <option>Local (lidocaína)</option>
+            <option>Local + sedación oral</option>
+            <option>General</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="odo-costo">Costo aproximado (MXN)</label>
+          <input type="text" id="odo-costo" name="odo_costo" placeholder="$0.00">
+        </div>
+        <div class="form-group span-2">
+          <label for="odo-cuidados">Cuidados posteriores</label>
+          <textarea id="odo-cuidados" name="odo_cuidados" rows="2" placeholder="Indicaciones del dentista…"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDICAMENTO standalone -->
+    <div class="card conditional-section" id="sec-MEDICAMENTO">
+      <div class="card-header">
+        <div class="card-icon">💊</div>
+        <span class="card-title">Registro de medicamento</span>
+      </div>
+      <div class="form-grid cols-2">
+        <div class="form-group">
+          <label for="med-nombre-s">Nombre del medicamento</label>
+          <input type="text" id="med-nombre-s" name="med_nombre_standalone" placeholder="Nombre genérico o comercial">
+        </div>
+        <div class="form-group">
+          <label for="med-tipo">Tipo</label>
+          <select id="med-tipo" name="med_tipo">
+            <option value="">Selecciona…</option>
+            <option>Receta nueva</option>
+            <option>Tratamiento crónico</option>
+            <option>Automedicación</option>
+            <option>Suplemento</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="med-dosis-s">Dosis</label>
+          <input type="text" id="med-dosis-s" name="med_dosis_standalone" placeholder="p. ej. 500mg / 10mg">
+        </div>
+        <div class="form-group">
+          <label for="med-frecuencia">Frecuencia</label>
+          <input type="text" id="med-frecuencia" name="med_frecuencia" placeholder="Cada 8 hrs / 1 vez al día">
+        </div>
+        <div class="form-group">
+          <label for="med-inicio">Fecha de inicio</label>
+          <input type="date" id="med-inicio" name="med_inicio">
+        </div>
+        <div class="form-group">
+          <label for="med-fin">Fecha de fin</label>
+          <input type="date" id="med-fin" name="med_fin">
+        </div>
+      </div>
+    </div>
+
+    <!-- ── 5. ARCHIVOS ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📎</div>
+        <span class="card-title">Archivos adjuntos</span>
+      </div>
+
+      <div class="warn-box" style="margin-bottom:16px">
+        <span>⚠️</span>
+        <span>Los archivos se renombran automáticamente con la nomenclatura del evento y se guardan en la carpeta correspondiente en Drive al enviar el formulario.</span>
+      </div>
+
+      <div class="file-zone" id="fileZone">
+        <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.gif,.doc,.docx,.heic">
+        <div class="file-zone-icon">📂</div>
+        <div class="file-zone-label">Arrastra archivos aquí o haz clic para seleccionar</div>
+        <div class="file-zone-sub">PDF, imágenes, documentos · Máx. 10 MB por archivo</div>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <p class="helper" style="margin-top:10px">
+        Los archivos se nombrarán: <code style="font-size:11px;background:#f0f0f0;padding:2px 6px;border-radius:4px">{ID_Evento}_{ID_Persona}_{Tipo}_{Fecha}_{seq}.ext</code>
+      </p>
+    </div>
+
+    <!-- ── 6. NOTAS ADICIONALES ── -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-icon">📝</div>
+        <span class="card-title">Notas adicionales</span>
+      </div>
+      <div class="form-grid cols-1">
+        <div class="form-group">
+          <textarea id="notas" name="notas" rows="3" placeholder="Cualquier observación adicional, contexto relevante, estado de ánimo, síntomas previos…"></textarea>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="form-group">
+        <label for="registradoPor">Registrado por</label>
+        <select id="registradoPor" name="registradoPor">
+          <option value="">Selecciona…</option>
+          <option value="P001">Elías</option>
+          <option value="P002">María Inés</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ── SUBMIT ── -->
+    <div class="submit-area">
+      <button type="button" class="btn-reset" onclick="resetForm()">Limpiar formulario</button>
+      <button type="submit" class="btn-submit" id="btnSubmit">
+        <span class="spinner" id="submitSpinner"></span>
+        <span id="btnSubmitText">Guardar evento</span>
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIGURACIÓN ──────────────────────────────────────────────────────────────
+const CONFIG = {
+  // 🔧 REEMPLAZA con la URL de tu Google Apps Script Web App
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/TU_SCRIPT_ID/exec',
+  MAX_FILE_MB: 10,
+};
+
+// ── PERSONAS ──────────────────────────────────────────────────────────────────
+const PERSONAS = [
+  { id: 'P001', nombre: 'Elías',      iniciales: 'EA', sangre: 'O+', color: '#2D5F4F' },
+  { id: 'P002', nombre: 'María Inés', iniciales: 'MI', sangre: 'A+', color: '#5A4A7A' },
+];
+
+// ── SUBTIPOS POR TIPO ────────────────────────────────────────────────────────
+const SUBTIPOS = {
+  VACUNACION:  ['Influenza', 'COVID-19', 'Hepatitis A', 'Hepatitis B', 'Tétanos / Td', 'Neumococo', 'VPH', 'Varicela', 'Otra'],
+  ENFERMEDAD:  ['Viral', 'Bacteriana', 'Alérgica', 'Crónica', 'Parasitaria', 'Otra'],
+  CONSULTA:    ['General / Medicina familiar', 'Especialista', 'Urgencias', 'Control / Seguimiento', 'Segunda opinión'],
+  INCIDENTE:   ['Accidente', 'Caída', 'Quemadura', 'Golpe / Contusión', 'Cortada / Herida', 'Intoxicación', 'Otro'],
+  ESTUDIO:     ['Análisis de sangre', 'Análisis de orina', 'Rayos X', 'Ultrasonido', 'Tomografía', 'Resonancia magnética', 'Electrocardiograma', 'Cultivo', 'Otro'],
+  CIRUGIA:     ['Electiva / Programada', 'Urgencia', 'Dental / Boca', 'Artroscopia', 'Laparoscopia', 'Otro'],
+  ODONTOLOGIA: ['Limpieza', 'Extracción', 'Ortodoncia', 'Endodoncia (canal)', 'Corona / Implante', 'Blanqueamiento', 'Revisión', 'Otro'],
+  MEDICAMENTO: ['Receta nueva', 'Tratamiento crónico', 'Automedicación', 'Suplemento / Vitamina'],
+};
+
+// ── SECCIONES CONDICIONALES POR TIPO ─────────────────────────────────────────
+const SECCIONES_MAPA = {
+  VACUNACION:  ['sec-VACUNACION'],
+  ENFERMEDAD:  ['sec-ENFERMEDAD'],
+  CONSULTA:    ['sec-ENFERMEDAD'],  // reutiliza sección clínica
+  CIRUGIA:     ['sec-ENFERMEDAD'],
+  INCIDENTE:   ['sec-INCIDENTE'],
+  ESTUDIO:     ['sec-ESTUDIO'],
+  ODONTOLOGIA: ['sec-ODONTOLOGIA'],
+  MEDICAMENTO: ['sec-MEDICAMENTO'],
+};
+
+const TITULOS_CLINICO = {
+  ENFERMEDAD: 'Detalles clínicos',
+  CONSULTA:   'Detalles de la consulta',
+  CIRUGIA:    'Detalles quirúrgicos',
+};
+
+// ── ESTADO ────────────────────────────────────────────────────────────────────
+let selectedPersona = null;
+let selectedTipo    = null;
+let attachedFiles   = [];
+let medRowCount     = 0;
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderPersonas();
+  initFileZone();
+  setDefaultDate();
+  document.getElementById('medForm').addEventListener('submit', handleSubmit);
+  updateProgress();
+});
+
+// ── PERSONAS ─────────────────────────────────────────────────────────────────
+function renderPersonas() {
+  const grid = document.getElementById('personaGrid');
+  grid.innerHTML = '';
+
+  PERSONAS.forEach(p => {
+    const card = document.createElement('div');
+    card.className = 'persona-card';
+    card.dataset.id = p.id;
+    card.innerHTML = `
+      <div class="persona-avatar" style="background:${p.color}">${p.iniciales}</div>
+      <div class="persona-name">${p.nombre}</div>
+      <div class="persona-meta">Sangre: ${p.sangre}</div>
+    `;
+    card.onclick = () => selectPersona(p, card);
+    grid.appendChild(card);
+  });
+
+  // Botón "agregar persona"
+  const addCard = document.createElement('div');
+  addCard.className = 'persona-card persona-add';
+  addCard.innerHTML = `
+    <div class="persona-avatar">+</div>
+    <div class="persona-name">Agregar</div>
+    <div class="persona-meta">Nueva persona</div>
+  `;
+  addCard.onclick = () => showToast('Próximamente: agregar nuevas personas', '🔜', 'warn');
+  grid.appendChild(addCard);
+}
+
+function selectPersona(p, card) {
+  document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedPersona = p;
+  document.getElementById('idPersona').value    = p.id;
+  document.getElementById('nombrePersona').value = p.nombre;
+  updateProgress();
+}
+
+// ── TIPO EVENTO ───────────────────────────────────────────────────────────────
+function selectTipo(chip) {
+  document.querySelectorAll('.tipo-chip').forEach(c => c.classList.remove('selected'));
+  chip.classList.add('selected');
+  selectedTipo = chip.dataset.tipo;
+  document.getElementById('tipoEvento').value = selectedTipo;
+
+  // Subtipos
+  const sub = document.getElementById('subtipo');
+  sub.innerHTML = '<option value="">Selecciona subtipo…</option>';
+  (SUBTIPOS[selectedTipo] || []).forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    sub.appendChild(opt);
+  });
+
+  // Mostrar / ocultar secciones
+  const todasSecciones = ['sec-VACUNACION','sec-ENFERMEDAD','sec-INCIDENTE','sec-ESTUDIO','sec-ODONTOLOGIA','sec-MEDICAMENTO'];
+  todasSecciones.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('visible');
+  });
+
+  (SECCIONES_MAPA[selectedTipo] || []).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.add('visible');
+  });
+
+  // Título dinámico sección clínica
+  const titulo = document.getElementById('sec-clinico-title');
+  if (titulo) titulo.textContent = TITULOS_CLINICO[selectedTipo] || 'Detalles clínicos';
+
+  // Scroll al siguiente card
+  setTimeout(() => {
+    document.querySelectorAll('.card')[2]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+
+  updateProgress();
+}
+
+// ── MEDICAMENTOS ROWS ────────────────────────────────────────────────────────
+function addMedRow() {
+  medRowCount++;
+  const n = medRowCount;
+  const row = document.createElement('div');
+  row.className = 'med-row';
+  row.id = `med-row-${n}`;
+  row.innerHTML = `
+    <div class="form-group">
+      <label>Medicamento</label>
+      <input type="text" name="med_nombre_${n}" placeholder="Nombre genérico o comercial">
+    </div>
+    <div class="form-group">
+      <label>Dosis</label>
+      <input type="text" name="med_dosis_${n}" placeholder="500mg / 10mg">
+    </div>
+    <div class="form-group">
+      <label>Frecuencia</label>
+      <input type="text" name="med_freq_${n}" placeholder="Cada 8 hrs">
+    </div>
+    <button type="button" class="med-remove" onclick="removeMedRow(${n})" title="Quitar">✕</button>
+  `;
+  document.getElementById('med-rows').appendChild(row);
+}
+
+function removeMedRow(n) {
+  const row = document.getElementById(`med-row-${n}`);
+  if (row) row.remove();
+}
+
+// ── FILE ZONE ─────────────────────────────────────────────────────────────────
+function initFileZone() {
+  const zone  = document.getElementById('fileZone');
+  const input = document.getElementById('fileInput');
+
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    handleFiles([...e.dataTransfer.files]);
+  });
+
+  input.addEventListener('change', () => {
+    handleFiles([...input.files]);
+    input.value = '';
+  });
+}
+
+function handleFiles(files) {
+  files.forEach(file => {
+    const maxBytes = CONFIG.MAX_FILE_MB * 1024 * 1024;
+    if (file.size > maxBytes) {
+      showToast(`${file.name} supera ${CONFIG.MAX_FILE_MB} MB`, '⚠️', 'error');
+      return;
+    }
+    if (attachedFiles.find(f => f.original === file.name)) {
+      showToast(`${file.name} ya fue agregado`, 'ℹ️', 'warn');
+      return;
+    }
+    attachedFiles.push({ file, original: file.name, id: Date.now() + Math.random() });
+    renderFileList();
+    updateProgress();
+  });
+}
+
+function getFileIcon(name) {
+  const ext = name.split('.').pop().toLowerCase();
+  if (['pdf'].includes(ext)) return '📄';
+  if (['jpg','jpeg','png','webp','gif','heic'].includes(ext)) return '🖼️';
+  if (['doc','docx'].includes(ext)) return '📝';
+  return '📎';
+}
+
+function formatBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = '';
+  attachedFiles.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    div.innerHTML = `
+      <span class="file-item-icon">${getFileIcon(item.original)}</span>
+      <div class="file-item-info">
+        <div class="file-item-name">${item.original}</div>
+        <div class="file-item-size">${formatBytes(item.file.size)} · Se renombrará al enviar</div>
+      </div>
+      <button type="button" class="file-remove" onclick="removeFile(${idx})" title="Quitar">✕</button>
+    `;
+    list.appendChild(div);
+  });
+}
+
+function removeFile(idx) {
+  attachedFiles.splice(idx, 1);
+  renderFileList();
+  updateProgress();
+}
+
+// ── PROGRESS ──────────────────────────────────────────────────────────────────
+function updateProgress() {
+  let score = 0;
+  if (selectedPersona)  score += 25;
+  if (selectedTipo)     score += 25;
+  const fecha = document.getElementById('fecha').value;
+  const desc  = document.getElementById('descripcion').value;
+  if (fecha) score += 25;
+  if (desc)  score += 25;
+
+  document.getElementById('progressFill').style.width = score + '%';
+}
+
+// Listeners para progress
+document.addEventListener('DOMContentLoaded', () => {
+  ['fecha','descripcion'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateProgress);
+  });
+});
+
+// ── FECHA DEFAULT ─────────────────────────────────────────────────────────────
+function setDefaultDate() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fecha').value = today;
+  const now = new Date();
+  document.getElementById('hora').value = now.toTimeString().slice(0,5);
+  updateProgress();
+}
+
+// ── SUBMIT ────────────────────────────────────────────────────────────────────
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  // Validaciones básicas
+  if (!selectedPersona) { showToast('Selecciona una persona', '👤', 'error'); return; }
+  if (!selectedTipo)    { showToast('Selecciona el tipo de evento', '🏷️', 'error'); return; }
+
+  const fecha = document.getElementById('fecha').value;
+  const desc  = document.getElementById('descripcion').value.trim();
+  if (!fecha) { showToast('La fecha es obligatoria', '📅', 'error'); return; }
+  if (!desc)  { showToast('La descripción es obligatoria', '📝', 'error'); return; }
+
+  // Generar ID de evento
+  const idEvento = generateEventId();
+
+  // Renombrar archivos con nomenclatura
+  const renamedFiles = attachedFiles.map((item, idx) => {
+    const ext   = item.original.split('.').pop();
+    const seq   = String(idx + 1).padStart(2, '0');
+    const fecha_fmt = fecha.replace(/-/g, '');
+    const newName = `${idEvento}_${selectedPersona.id}_${selectedTipo}_${fecha_fmt}_${seq}.${ext}`;
+    return { ...item, renamed: newName };
+  });
+
+  // Preparar datos del formulario
+  const formData = collectFormData(idEvento, renamedFiles);
+
+  // UI → loading
+  setSubmitLoading(true);
+
+  try {
+    // 🔧 AQUÍ va la llamada real a Apps Script
+    // Por ahora: simulación para ver los datos
+    console.log('📤 Datos a enviar:', formData);
+    console.log('📎 Archivos:', renamedFiles.map(f => f.renamed));
+
+    // Simular envío
+    await simulateSubmit(formData, renamedFiles);
+
+    showToast(`Evento ${idEvento} guardado correctamente`, '✅');
+    setTimeout(() => resetForm(), 2000);
+
+  } catch (err) {
+    console.error(err);
+    showToast('Error al guardar. Intenta de nuevo.', '❌', 'error');
+  } finally {
+    setSubmitLoading(false);
+  }
+}
+
+function generateEventId() {
+  const now  = new Date();
+  const yyyy = now.getFullYear().toString().slice(-2);
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const dd   = String(now.getDate()).padStart(2,'0');
+  const seq  = String(Math.floor(Math.random() * 900) + 100);
+  return `E${yyyy}${mm}${dd}${seq}`;
+}
+
+function collectFormData(idEvento, renamedFiles) {
+  const form = document.getElementById('medForm');
+  const data = {
+    // Sistema
+    id_evento:        idEvento,
+    timestamp:        new Date().toISOString(),
+    registrado_por:   document.getElementById('registradoPor').value,
+    // Persona
+    id_persona:       selectedPersona.id,
+    nombre_persona:   selectedPersona.nombre,
+    // Evento base
+    tipo_evento:      selectedTipo,
+    subtipo:          document.getElementById('subtipo').value,
+    fecha:            document.getElementById('fecha').value,
+    hora:             document.getElementById('hora').value,
+    descripcion:      document.getElementById('descripcion').value,
+    medico:           document.getElementById('medico').value,
+    institucion:      document.getElementById('institucion').value,
+    notas:            document.getElementById('notas').value,
+    // Archivos
+    archivos_nombres: renamedFiles.map(f => f.renamed).join('|'),
+    archivos_count:   renamedFiles.length,
+  };
+
+  // Datos condicionales
+  if (selectedTipo === 'VACUNACION') {
+    Object.assign(data, {
+      vac_nombre:   document.getElementById('vac-nombre').value,
+      vac_lote:     document.getElementById('vac-lote').value,
+      vac_fabricante: document.getElementById('vac-fabricante').value,
+      vac_proxima:  document.getElementById('vac-proxima').value,
+      vac_sitio:    document.getElementById('vac-sitio').value,
+    });
+  }
+
+  if (['ENFERMEDAD','CONSULTA','CIRUGIA'].includes(selectedTipo)) {
+    // Medicamentos en rows
+    const meds = [];
+    document.querySelectorAll('[id^="med-row-"]').forEach(row => {
+      const inputs = row.querySelectorAll('input');
+      if (inputs[0]?.value) meds.push({ nombre: inputs[0].value, dosis: inputs[1]?.value, freq: inputs[2]?.value });
+    });
+    Object.assign(data, {
+      diagnostico:   document.getElementById('diagnostico').value,
+      tratamiento:   document.getElementById('tratamiento').value,
+      medicamentos:  JSON.stringify(meds),
+      proxima_cita:  document.getElementById('proxima-cita').value,
+      resultado:     document.getElementById('resultado').value,
+    });
+  }
+
+  if (selectedTipo === 'INCIDENTE') {
+    Object.assign(data, {
+      inc_lugar:           document.getElementById('inc-lugar').value,
+      inc_gravedad:        document.getElementById('inc-gravedad').value,
+      inc_primeros_auxilios: document.getElementById('inc-primeros-auxilios').value,
+      inc_secuelas:        document.getElementById('inc-secuelas').value,
+      inc_resultado:       document.getElementById('inc-resultado').value,
+    });
+  }
+
+  if (selectedTipo === 'ESTUDIO') {
+    Object.assign(data, {
+      est_nombre:        document.getElementById('est-nombre').value,
+      est_laboratorio:   document.getElementById('est-laboratorio').value,
+      est_interpretacion: document.getElementById('est-interpretacion').value,
+      est_valores:       document.getElementById('est-valores').value,
+      est_status:        document.getElementById('est-status').value,
+    });
+  }
+
+  if (selectedTipo === 'ODONTOLOGIA') {
+    Object.assign(data, {
+      odo_pieza:       document.getElementById('odo-pieza').value,
+      odo_procedimiento: document.getElementById('odo-procedimiento').value,
+      odo_anestesia:   document.getElementById('odo-anestesia').value,
+      odo_costo:       document.getElementById('odo-costo').value,
+      odo_cuidados:    document.getElementById('odo-cuidados').value,
+    });
+  }
+
+  if (selectedTipo === 'MEDICAMENTO') {
+    Object.assign(data, {
+      med_nombre_standalone: document.getElementById('med-nombre-s').value,
+      med_tipo:              document.getElementById('med-tipo').value,
+      med_dosis_standalone:  document.getElementById('med-dosis-s').value,
+      med_frecuencia:        document.getElementById('med-frecuencia').value,
+      med_inicio:            document.getElementById('med-inicio').value,
+      med_fin:               document.getElementById('med-fin').value,
+    });
+  }
+
+  return data;
+}
+
+// ── SIMULACIÓN (reemplazar con Apps Script real) ────────────────────────────
+async function simulateSubmit(data, files) {
+  await new Promise(r => setTimeout(r, 1800));
+  // En producción: POST a CONFIG.APPS_SCRIPT_URL con FormData o JSON
+  // Los archivos van como base64 dentro del JSON o como multipart
+  console.log('✅ Simulación exitosa. Datos:', data);
+}
+
+// ── HELPERS UI ────────────────────────────────────────────────────────────────
+function setSubmitLoading(on) {
+  const btn     = document.getElementById('btnSubmit');
+  const spinner = document.getElementById('submitSpinner');
+  const text    = document.getElementById('btnSubmitText');
+  btn.disabled         = on;
+  spinner.style.display = on ? 'block' : 'none';
+  text.textContent     = on ? 'Guardando…' : 'Guardar evento';
+}
+
+function showToast(msg, icon = '✅', type = '') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3800);
+}
+
+function resetForm() {
+  document.getElementById('medForm').reset();
+  // Reset state
+  selectedPersona = null;
+  selectedTipo    = null;
+  attachedFiles   = [];
+  medRowCount     = 0;
+  // Reset UI
+  document.querySelectorAll('.persona-card').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.tipo-chip').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.conditional-section').forEach(s => s.classList.remove('visible'));
+  document.getElementById('fileList').innerHTML = '';
+  document.getElementById('med-rows').innerHTML = '';
+  document.getElementById('subtipo').innerHTML = '<option value="">— Selecciona tipo primero —</option>';
+  setDefaultDate();
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>
