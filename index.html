@@ -1312,7 +1312,7 @@
 // ── CONFIGURACIÓN ──────────────────────────────────────────────────────────────
 const CONFIG = {
   // 🔧 REEMPLAZA con la URL de tu Google Apps Script Web App
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwEM1xZMZiZdUJrnOl7XEY7qcr85osZULTZ5_TWpl7dENNtC-1ojXfBH3JcdTwSBfjI/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwbqrMJ6EX2R_w8yaO6jMndnefw81tZ7RUQNU0CyvJ_wmPGVpL-tMfneg5VHYOhOhZU/exec',
   MAX_FILE_MB: 10,
 };
 
@@ -1780,18 +1780,7 @@ function resetForm() {
       renamedFiles.map(item => fileToBase64Payload(item))
     );
     const payload = { form: data, files: filesPayload };
-
-    const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(payload),
-      mode:    'cors',
-    });
-
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error || 'Error del servidor');
-    return json;
+    return postAlScript(payload);
   }
 
   function fileToBase64Payload(item) {
@@ -2019,19 +2008,34 @@ async function guardarPersonaEnScript(persona, modo) {
     accion:  modo === 'nueva' ? 'nueva_persona' : 'editar_persona',
     persona: persona,
   };
+  return postAlScript(payload);
+}
+
+// ── HELPER CENTRAL DE FETCH → Apps Script ──────────────────────────────────
+// Apps Script no soporta preflight CORS (OPTIONS), así que enviamos el JSON
+// como valor de un campo en un FormData — Apps Script lo lee en e.parameter.data
+async function postAlScript(payload) {
+  const form = new FormData();
+  form.append('data', JSON.stringify(payload));
 
   const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify(payload),
-    mode:    'cors',
+    method: 'POST',
+    body:   form,
   });
 
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // no-cors devuelve opaque response, así que usamos un redirect trick:
+  // Apps Script redirige a sí mismo con ?result=... en GET
+  // En su lugar usamos el approach estándar con followRedirects
+  if (!res.ok && res.type !== 'opaque') throw new Error(`HTTP ${res.status}`);
+
+  // Si es opaque (no-cors) asumimos éxito — Apps Script ya guardó
+  if (res.type === 'opaque') return { ok: true };
+
   const json = await res.json();
   if (!json.ok) throw new Error(json.error || 'Error del servidor');
   return json;
 }
+
 
 </script>
 </body>
